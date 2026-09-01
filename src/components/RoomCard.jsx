@@ -1,5 +1,7 @@
-import { motion } from 'framer-motion';
+import { motion, AnimatePresence } from 'framer-motion';
 import { Users, Bed, Maximize, ArrowRight } from 'lucide-react';
+import { useState } from 'react';
+import RoomModal from './RoomModal';
 
 const rooms = [
   {
@@ -32,6 +34,8 @@ const rooms = [
 ];
 
 export default function RoomCard() {
+  const [selectedRoom, setSelectedRoom] = useState(null);
+
   return (
     <section id="rooms" className="relative py-24 lg:py-32 px-6 lg:px-20">
       <div className="max-w-7xl mx-auto">
@@ -92,7 +96,10 @@ export default function RoomCard() {
                 <div className="room-details">
                   <div className="h-px bg-gold/30 mb-4" />
                   <p className="text-white/60 text-sm mb-4">{room.desc}</p>
-                  <button className="text-gold text-xs tracking-widest uppercase flex items-center gap-2">
+                  <button 
+                    onClick={() => setSelectedRoom(room)}
+                    className="text-gold text-xs tracking-widest uppercase flex items-center gap-2"
+                  >
                     View Details <ArrowRight className="w-3 h-3" />
                   </button>
                 </div>
@@ -101,6 +108,13 @@ export default function RoomCard() {
           ))}
         </div>
       </div>
+
+      {/* ROOM MODAL */}
+      <AnimatePresence>
+        {selectedRoom && (
+          <RoomModal room={selectedRoom} onClose={() => setSelectedRoom(null)} />
+        )}
+      </AnimatePresence>
     </section>
   );
 }

@@ -9,57 +9,6 @@ const rooms = [
   { name: 'Infinity Pool Villa', price: 950, size: '120m²', bed: 'King Bed', image: 'https://images.unsplash.com/photo-1520250497591-112f2f40a3f4?w=200&q=80' },
 ]
 
-const guestOptions = [
-  '1 Adult · 0 Children',
-  '2 Adults · 0 Children',
-  '2 Adults · 1 Child',
-  '2 Adults · 2 Children',
-  '3 Adults · 0 Children',
-  '3 Adults · 1 Child',
-  '3 Adults · 2 Children',
-  '4 Adults · 0 Children',
-  '4 Adults · 2 Children',
-  'Family Suite (6 Guests)'
-]
-
-const roomPreferences = [
-  'No Preference',
-  'Ocean View',
-  'Private Pool',
-  'Garden View',
-  'Lagoon Access',
-  'Overwater Villa',
-  'Beachfront',
-  'Sunset View',
-  'Mountain View'
-]
-
-const countries = [
-  'Pakistan',
-  'United States',
-  'United Kingdom',
-  'Canada',
-  'Australia',
-  'United Arab Emirates',
-  'Saudi Arabia',
-  'Qatar',
-  'India',
-  'Germany',
-  'France',
-  'Italy',
-  'Spain',
-  'Turkey',
-  'China',
-  'Japan',
-  'Malaysia',
-  'Singapore',
-  'Maldives',
-  'Thailand',
-  'Switzerland',
-  'Netherlands',
-  'Other'
-]
-
 export default function BookingForm() {
   const navigate = useNavigate()
   const [step, setStep] = useState(1)
@@ -72,14 +21,14 @@ export default function BookingForm() {
   const [formData, setFormData] = useState({
     checkIn: '2025-05-24',
     checkOut: '2025-05-28',
-    guests: '2 Adults · 0 Children',
-    preference: 'No Preference',
+    guests: '',
+    preference: '',
     requests: '',
     firstName: '',
     lastName: '',
     email: '',
     phone: '',
-    country: 'Pakistan'
+    country: ''
   })
 
   const updateField = (field, value) => {
@@ -92,11 +41,13 @@ export default function BookingForm() {
   const validateStep = () => {
     const newErrors = {}
     if (step === 1) {
-      if (!formData.checkIn) newErrors.checkIn = 'Check-in date is required'
-      if (!formData.checkOut) newErrors.checkOut = 'Check-out date is required'
+      if (!formData.checkIn.trim()) newErrors.checkIn = 'Check-in date is required'
+      if (!formData.checkOut.trim()) newErrors.checkOut = 'Check-out date is required'
       if (formData.checkIn && formData.checkOut && new Date(formData.checkOut) <= new Date(formData.checkIn)) {
         newErrors.checkOut = 'Must be after check-in date'
       }
+      if (!formData.guests.trim()) newErrors.guests = 'Number of guests is required'
+      if (!formData.preference.trim()) newErrors.preference = 'Room preference is required'
     }
     if (step === 2) {
       if (selectedRoom === null) newErrors.room = 'Please select a room'
@@ -107,7 +58,7 @@ export default function BookingForm() {
       if (!formData.email.trim()) newErrors.email = 'Email is required'
       else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.email)) newErrors.email = 'Invalid email address'
       if (!formData.phone.trim()) newErrors.phone = 'Phone is required'
-      if (!formData.country) newErrors.country = 'Country is required'
+      if (!formData.country.trim()) newErrors.country = 'Country is required'
     }
     setErrors(newErrors)
     return Object.keys(newErrors).length === 0
@@ -282,23 +233,25 @@ For inquiries: reservations@aurelia.com
                   </div>
                   <div className="space-y-2">
                     <label className="text-[10px] tracking-widest uppercase text-white/40">Guests *</label>
-                    <select 
-                      className="luxury-input"
+                    <input 
+                      type="text" 
+                      className={`luxury-input ${errors.guests ? 'border-red-500' : ''}`}
+                      placeholder="e.g. 2 Adults, 1 Child"
                       value={formData.guests}
                       onChange={(e) => updateField('guests', e.target.value)}
-                    >
-                      {guestOptions.map(opt => <option key={opt}>{opt}</option>)}
-                    </select>
+                    />
+                    {errors.guests && <p className="text-red-400 text-xs mt-1">{errors.guests}</p>}
                   </div>
                   <div className="space-y-2">
-                    <label className="text-[10px] tracking-widest uppercase text-white/40">Room Preference</label>
-                    <select 
-                      className="luxury-input"
+                    <label className="text-[10px] tracking-widest uppercase text-white/40">Room Preference *</label>
+                    <input 
+                      type="text" 
+                      className={`luxury-input ${errors.preference ? 'border-red-500' : ''}`}
+                      placeholder="e.g. Ocean View, Private Pool"
                       value={formData.preference}
                       onChange={(e) => updateField('preference', e.target.value)}
-                    >
-                      {roomPreferences.map(opt => <option key={opt}>{opt}</option>)}
-                    </select>
+                    />
+                    {errors.preference && <p className="text-red-400 text-xs mt-1">{errors.preference}</p>}
                   </div>
                 </div>
                 <div className="space-y-2 mb-8">
@@ -394,13 +347,13 @@ For inquiries: reservations@aurelia.com
                   </div>
                   <div className="space-y-2 md:col-span-2">
                     <label className="text-[10px] tracking-widest uppercase text-white/40">Country *</label>
-                    <select 
+                    <input 
+                      type="text" 
                       className={`luxury-input ${errors.country ? 'border-red-500' : ''}`}
+                      placeholder="e.g. Pakistan"
                       value={formData.country}
                       onChange={(e) => updateField('country', e.target.value)}
-                    >
-                      {countries.map(c => <option key={c}>{c}</option>)}
-                    </select>
+                    />
                     {errors.country && <p className="text-red-400 text-xs mt-1">{errors.country}</p>}
                   </div>
                 </div>

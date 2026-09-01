@@ -4,6 +4,7 @@ import { useState } from 'react';
 
 export default function Story() {
   const [showMore, setShowMore] = useState(false);
+  const [showVideo, setShowVideo] = useState(false);
 
   return (
     <section id="story" className="relative py-24 lg:py-40 px-6 lg:px-20 overflow-hidden">
@@ -64,6 +65,7 @@ export default function Story() {
             </motion.div>
             
             <motion.button 
+              onClick={() => setShowVideo(true)}
               initial={{ opacity: 0, scale: 0.8 }}
               whileInView={{ opacity: 1, scale: 1 }}
               viewport={{ once: true }}
@@ -202,6 +204,41 @@ export default function Story() {
           )}
         </AnimatePresence>
       </div>
+
+      {/* VIDEO MODAL */}
+      <AnimatePresence>
+        {showVideo && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 z-[8000] bg-dark/95 backdrop-blur-xl flex items-center justify-center p-4 lg:p-12"
+            onClick={() => setShowVideo(false)}
+          >
+            <motion.div
+              initial={{ scale: 0.9, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              exit={{ scale: 0.9, opacity: 0 }}
+              transition={{ type: "spring", damping: 25 }}
+              className="w-full max-w-5xl aspect-video rounded-2xl overflow-hidden relative"
+              onClick={(e) => e.stopPropagation()}
+            >
+              <video
+                src="https://assets.mixkit.co/videos/preview/mixkit-aerial-view-of-a-luxury-resort-in-the-maldives-4997-large.mp4"
+                controls
+                autoPlay
+                className="w-full h-full object-cover"
+              />
+              <button 
+                onClick={() => setShowVideo(false)}
+                className="absolute top-4 right-4 w-10 h-10 rounded-full glass flex items-center justify-center text-white hover:text-gold transition-colors z-10"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
     </section>
   );
 }

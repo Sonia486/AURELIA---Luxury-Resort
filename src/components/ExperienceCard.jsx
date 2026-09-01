@@ -1,6 +1,7 @@
 import { motion, AnimatePresence } from 'framer-motion';
 import { ArrowRight, X, Clock, Star, MapPin, Calendar } from 'lucide-react';
 import { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 
 const experiences = [
   {
@@ -46,6 +47,7 @@ const experiences = [
 ];
 
 export default function ExperienceCard() {
+  const navigate = useNavigate()
   const [selectedExp, setSelectedExp] = useState(null);
 
   return (
@@ -182,7 +184,10 @@ export default function ExperienceCard() {
                       <p className="text-white/50 text-sm mb-6">
                         Our concierge team will curate this experience specifically for your preferences and schedule.
                       </p>
-                      <button className="magnetic-btn w-full justify-center">
+                      <button 
+                        onClick={() => { setSelectedExp(null); navigate('/booking') }}
+                        className="magnetic-btn w-full justify-center"
+                      >
                         Book Now
                       </button>
                     </div>

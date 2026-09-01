@@ -104,7 +104,7 @@ export default function Hero() {
         </button>
       </motion.div>
 
-      {/* Location */}
+      {/* Location - PAKISTAN */}
       <motion.div 
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
@@ -114,7 +114,7 @@ export default function Hero() {
         <div className="glass px-4 py-3 rounded-lg">
           <div className="flex items-center gap-2 text-white/60 text-xs">
             <MapPin className="w-3 h-3 text-gold" />
-            <span>Maldives, Indian Ocean</span>
+            <span>Hunza Valley, Pakistan</span>
           </div>
         </div>
       </motion.div>

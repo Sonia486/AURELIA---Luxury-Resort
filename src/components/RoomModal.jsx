@@ -1,5 +1,6 @@
 import { motion } from 'framer-motion'
 import { X, Users, Bed, Maximize, Wifi, Coffee, Waves, Wind, Tv, Wine, ConciergeBell, Check } from 'lucide-react'
+import { useNavigate } from 'react-router-dom'
 
 const amenities = [
   { icon: Wifi, label: 'Free Wi-Fi' },
@@ -13,6 +14,7 @@ const amenities = [
 ]
 
 export default function RoomModal({ room, onClose }) {
+  const navigate = useNavigate()
   if (!room) return null
 
   return (
@@ -98,7 +100,10 @@ export default function RoomModal({ room, onClose }) {
                 </div>
               </div>
 
-              <button className="magnetic-btn w-full justify-center">
+              <button 
+                onClick={() => { onClose(); navigate('/booking') }}
+                className="magnetic-btn w-full justify-center"
+              >
                 Reserve This Room
               </button>
             </div>

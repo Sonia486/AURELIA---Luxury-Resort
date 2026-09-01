@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
-import { ArrowRight, Check, ArrowLeft, Sparkles } from 'lucide-react'
+import { ArrowRight, Check, ArrowLeft, Sparkles, Download, Home, Calendar, Users, Bed, MapPin, CreditCard, Mail, Phone, User } from 'lucide-react'
+import { useNavigate } from 'react-router-dom'
 
 const rooms = [
   { name: 'Ocean Suite', price: 450, size: '65m²', bed: 'King Bed', image: 'https://images.unsplash.com/photo-1631049307264-da0ec9d70304?w=200&q=80' },
@@ -8,19 +9,190 @@ const rooms = [
   { name: 'Infinity Pool Villa', price: 950, size: '120m²', bed: 'King Bed', image: 'https://images.unsplash.com/photo-1520250497591-112f2f40a3f4?w=200&q=80' },
 ]
 
+const guestOptions = [
+  '1 Adult · 0 Children',
+  '2 Adults · 0 Children',
+  '2 Adults · 1 Child',
+  '2 Adults · 2 Children',
+  '3 Adults · 0 Children',
+  '3 Adults · 1 Child',
+  '3 Adults · 2 Children',
+  '4 Adults · 0 Children',
+  '4 Adults · 2 Children',
+  'Family Suite (6 Guests)'
+]
+
+const roomPreferences = [
+  'No Preference',
+  'Ocean View',
+  'Private Pool',
+  'Garden View',
+  'Lagoon Access',
+  'Overwater Villa',
+  'Beachfront',
+  'Sunset View',
+  'Mountain View'
+]
+
+const countries = [
+  'Pakistan',
+  'United States',
+  'United Kingdom',
+  'Canada',
+  'Australia',
+  'United Arab Emirates',
+  'Saudi Arabia',
+  'Qatar',
+  'India',
+  'Germany',
+  'France',
+  'Italy',
+  'Spain',
+  'Turkey',
+  'China',
+  'Japan',
+  'Malaysia',
+  'Singapore',
+  'Maldives',
+  'Thailand',
+  'Switzerland',
+  'Netherlands',
+  'Other'
+]
+
 export default function BookingForm() {
+  const navigate = useNavigate()
   const [step, setStep] = useState(1)
   const [selectedRoom, setSelectedRoom] = useState(null)
   const [confirmed, setConfirmed] = useState(false)
+  const [showDetails, setShowDetails] = useState(false)
+  const [errors, setErrors] = useState({})
+  const [bookingId] = useState(`AUR-${new Date().getFullYear()}-${Math.floor(1000 + Math.random() * 9000)}`)
+  
+  const [formData, setFormData] = useState({
+    checkIn: '2025-05-24',
+    checkOut: '2025-05-28',
+    guests: '2 Adults · 0 Children',
+    preference: 'No Preference',
+    requests: '',
+    firstName: '',
+    lastName: '',
+    email: '',
+    phone: '',
+    country: 'Pakistan'
+  })
 
-  const nextStep = () => setStep(s => Math.min(s + 1, 4))
+  const updateField = (field, value) => {
+    setFormData(prev => ({ ...prev, [field]: value }))
+    if (errors[field]) {
+      setErrors(prev => { const e = { ...prev }; delete e[field]; return e })
+    }
+  }
+
+  const validateStep = () => {
+    const newErrors = {}
+    if (step === 1) {
+      if (!formData.checkIn) newErrors.checkIn = 'Check-in date is required'
+      if (!formData.checkOut) newErrors.checkOut = 'Check-out date is required'
+      if (formData.checkIn && formData.checkOut && new Date(formData.checkOut) <= new Date(formData.checkIn)) {
+        newErrors.checkOut = 'Must be after check-in date'
+      }
+    }
+    if (step === 2) {
+      if (selectedRoom === null) newErrors.room = 'Please select a room'
+    }
+    if (step === 3) {
+      if (!formData.firstName.trim()) newErrors.firstName = 'First name is required'
+      if (!formData.lastName.trim()) newErrors.lastName = 'Last name is required'
+      if (!formData.email.trim()) newErrors.email = 'Email is required'
+      else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.email)) newErrors.email = 'Invalid email address'
+      if (!formData.phone.trim()) newErrors.phone = 'Phone is required'
+      if (!formData.country) newErrors.country = 'Country is required'
+    }
+    setErrors(newErrors)
+    return Object.keys(newErrors).length === 0
+  }
+
+  const nextStep = () => {
+    if (validateStep()) setStep(s => Math.min(s + 1, 4))
+  }
+  
   const prevStep = () => setStep(s => Math.max(s - 1, 1))
-  const selectRoom = (idx) => setSelectedRoom(idx)
+  const selectRoom = (idx) => {
+    setSelectedRoom(idx)
+    if (errors.room) setErrors(prev => { const e = { ...prev }; delete e.room; return e })
+  }
 
   const confirmBooking = () => {
     setConfirmed(true)
-    setTimeout(() => setConfirmed(false), 6000)
   }
+
+  const downloadDetails = () => {
+    const room = selectedRoom !== null ? rooms[selectedRoom] : rooms[0]
+    const nights = Math.ceil((new Date(formData.checkOut) - new Date(formData.checkIn)) / (1000 * 60 * 60 * 24)) || 4
+    const content = `
+=======================================
+    AURELIA - LUXURY RESORT & PRIVATE RETREAT
+         BOOKING CONFIRMATION
+=======================================
+
+Booking ID: ${bookingId}
+Date: ${new Date().toLocaleDateString()}
+
+---------------------------------------
+GUEST INFORMATION
+---------------------------------------
+Name: ${formData.firstName} ${formData.lastName}
+Email: ${formData.email}
+Phone: ${formData.phone}
+Country: ${formData.country}
+
+---------------------------------------
+STAY DETAILS
+---------------------------------------
+Check-in: ${formData.checkIn}
+Check-out: ${formData.checkOut}
+Nights: ${nights}
+Guests: ${formData.guests}
+Room Preference: ${formData.preference}
+Special Requests: ${formData.requests || 'None'}
+
+---------------------------------------
+ROOM DETAILS
+---------------------------------------
+Room: ${room.name}
+Size: ${room.size}
+Bed: ${room.bed}
+Price/Night: $${room.price}
+
+---------------------------------------
+PAYMENT SUMMARY
+---------------------------------------
+Room Price: $${room.price * nights}
+Taxes & Fees: $180
+------------------------
+TOTAL: $${room.price * nights + 180}
+
+---------------------------------------
+Thank you for choosing Aurelia.
+We look forward to welcoming you.
+
+For inquiries: reservations@aurelia.com
+=======================================
+`
+    const blob = new Blob([content], { type: 'text/plain' })
+    const url = URL.createObjectURL(blob)
+    const a = document.createElement('a')
+    a.href = url
+    a.download = `Aurelia-Booking-${bookingId}.txt`
+    document.body.appendChild(a)
+    a.click()
+    document.body.removeChild(a)
+    URL.revokeObjectURL(url)
+  }
+
+  const nights = Math.ceil((new Date(formData.checkOut) - new Date(formData.checkIn)) / (1000 * 60 * 60 * 24)) || 4
+  const selectedRoomData = selectedRoom !== null ? rooms[selectedRoom] : rooms[0]
 
   return (
     <section id="booking" className="py-24 lg:py-40 px-6 lg:px-20 relative">
@@ -69,7 +241,7 @@ export default function BookingForm() {
         >
           {/* Steps */}
           <div className="flex items-center justify-center mb-12 max-w-md mx-auto">
-            {[1,2,3,4].map((s, i) => (
+            {[1,2,3,4].map((s) => (
               <div key={s} className="flex items-center flex-1">
                 <div className={`step-dot ${step >= s ? 'active' : ''}`} />
                 {s < 4 && <div className={`step-line ${step > s ? 'active' : ''}`} />}
@@ -89,31 +261,54 @@ export default function BookingForm() {
               <motion.div key="step1" initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -20 }}>
                 <div className="grid md:grid-cols-2 gap-6 mb-8">
                   <div className="space-y-2">
-                    <label className="text-[10px] tracking-widest uppercase text-white/40">Check-in Date</label>
-                    <input type="date" className="luxury-input" defaultValue="2025-05-24" />
+                    <label className="text-[10px] tracking-widest uppercase text-white/40">Check-in Date *</label>
+                    <input 
+                      type="date" 
+                      className={`luxury-input ${errors.checkIn ? 'border-red-500' : ''}`}
+                      value={formData.checkIn}
+                      onChange={(e) => updateField('checkIn', e.target.value)}
+                    />
+                    {errors.checkIn && <p className="text-red-400 text-xs mt-1">{errors.checkIn}</p>}
                   </div>
                   <div className="space-y-2">
-                    <label className="text-[10px] tracking-widest uppercase text-white/40">Check-out Date</label>
-                    <input type="date" className="luxury-input" defaultValue="2025-05-28" />
+                    <label className="text-[10px] tracking-widest uppercase text-white/40">Check-out Date *</label>
+                    <input 
+                      type="date" 
+                      className={`luxury-input ${errors.checkOut ? 'border-red-500' : ''}`}
+                      value={formData.checkOut}
+                      onChange={(e) => updateField('checkOut', e.target.value)}
+                    />
+                    {errors.checkOut && <p className="text-red-400 text-xs mt-1">{errors.checkOut}</p>}
                   </div>
                   <div className="space-y-2">
-                    <label className="text-[10px] tracking-widest uppercase text-white/40">Guests</label>
-                    <select className="luxury-input">
-                      <option>2 Adults · 0 Children</option>
-                      <option>2 Adults · 1 Child</option>
+                    <label className="text-[10px] tracking-widest uppercase text-white/40">Guests *</label>
+                    <select 
+                      className="luxury-input"
+                      value={formData.guests}
+                      onChange={(e) => updateField('guests', e.target.value)}
+                    >
+                      {guestOptions.map(opt => <option key={opt}>{opt}</option>)}
                     </select>
                   </div>
                   <div className="space-y-2">
                     <label className="text-[10px] tracking-widest uppercase text-white/40">Room Preference</label>
-                    <select className="luxury-input">
-                      <option>No Preference</option>
-                      <option>Ocean View</option>
+                    <select 
+                      className="luxury-input"
+                      value={formData.preference}
+                      onChange={(e) => updateField('preference', e.target.value)}
+                    >
+                      {roomPreferences.map(opt => <option key={opt}>{opt}</option>)}
                     </select>
                   </div>
                 </div>
                 <div className="space-y-2 mb-8">
                   <label className="text-[10px] tracking-widest uppercase text-white/40">Special Requests</label>
-                  <textarea className="luxury-input h-24 resize-none" placeholder="Any special requirements..." />
+                  <textarea 
+                    className="luxury-input h-24 resize-none" 
+                    placeholder="Any special requirements..."
+                    value={formData.requests}
+                    onChange={(e) => updateField('requests', e.target.value)}
+                  />
                 </div>
                 <button onClick={nextStep} className="magnetic-btn w-full justify-center">
                   Continue <ArrowRight className="w-4 h-4" />
@@ -123,6 +318,7 @@ export default function BookingForm() {
 
             {step === 2 && (
               <motion.div key="step2" initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -20 }}>
+                {errors.room && <p className="text-red-400 text-xs mb-4 text-center">{errors.room}</p>}
                 <div className="space-y-4 mb-8">
                   {rooms.map((room, idx) => (
                     <div 
@@ -153,28 +349,59 @@ export default function BookingForm() {
               <motion.div key="step3" initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -20 }}>
                 <div className="grid md:grid-cols-2 gap-6 mb-8">
                   <div className="space-y-2">
-                    <label className="text-[10px] tracking-widest uppercase text-white/40">First Name</label>
-                    <input type="text" className="luxury-input" placeholder="John" />
+                    <label className="text-[10px] tracking-widest uppercase text-white/40">First Name *</label>
+                    <input 
+                      type="text" 
+                      className={`luxury-input ${errors.firstName ? 'border-red-500' : ''}`}
+                      placeholder="John"
+                      value={formData.firstName}
+                      onChange={(e) => updateField('firstName', e.target.value)}
+                    />
+                    {errors.firstName && <p className="text-red-400 text-xs mt-1">{errors.firstName}</p>}
                   </div>
                   <div className="space-y-2">
-                    <label className="text-[10px] tracking-widest uppercase text-white/40">Last Name</label>
-                    <input type="text" className="luxury-input" placeholder="Doe" />
+                    <label className="text-[10px] tracking-widest uppercase text-white/40">Last Name *</label>
+                    <input 
+                      type="text" 
+                      className={`luxury-input ${errors.lastName ? 'border-red-500' : ''}`}
+                      placeholder="Doe"
+                      value={formData.lastName}
+                      onChange={(e) => updateField('lastName', e.target.value)}
+                    />
+                    {errors.lastName && <p className="text-red-400 text-xs mt-1">{errors.lastName}</p>}
                   </div>
                   <div className="space-y-2">
-                    <label className="text-[10px] tracking-widest uppercase text-white/40">Email</label>
-                    <input type="email" className="luxury-input" placeholder="john@example.com" />
+                    <label className="text-[10px] tracking-widest uppercase text-white/40">Email *</label>
+                    <input 
+                      type="email" 
+                      className={`luxury-input ${errors.email ? 'border-red-500' : ''}`}
+                      placeholder="john@example.com"
+                      value={formData.email}
+                      onChange={(e) => updateField('email', e.target.value)}
+                    />
+                    {errors.email && <p className="text-red-400 text-xs mt-1">{errors.email}</p>}
                   </div>
                   <div className="space-y-2">
-                    <label className="text-[10px] tracking-widest uppercase text-white/40">Phone</label>
-                    <input type="tel" className="luxury-input" placeholder="+1 234 567 890" />
+                    <label className="text-[10px] tracking-widest uppercase text-white/40">Phone *</label>
+                    <input 
+                      type="tel" 
+                      className={`luxury-input ${errors.phone ? 'border-red-500' : ''}`}
+                      placeholder="+1 234 567 890"
+                      value={formData.phone}
+                      onChange={(e) => updateField('phone', e.target.value)}
+                    />
+                    {errors.phone && <p className="text-red-400 text-xs mt-1">{errors.phone}</p>}
                   </div>
                   <div className="space-y-2 md:col-span-2">
-                    <label className="text-[10px] tracking-widest uppercase text-white/40">Country</label>
-                    <select className="luxury-input">
-                      <option>United States</option>
-                      <option>United Kingdom</option>
-                      <option>United Arab Emirates</option>
+                    <label className="text-[10px] tracking-widest uppercase text-white/40">Country *</label>
+                    <select 
+                      className={`luxury-input ${errors.country ? 'border-red-500' : ''}`}
+                      value={formData.country}
+                      onChange={(e) => updateField('country', e.target.value)}
+                    >
+                      {countries.map(c => <option key={c}>{c}</option>)}
                     </select>
+                    {errors.country && <p className="text-red-400 text-xs mt-1">{errors.country}</p>}
                   </div>
                 </div>
                 <div className="flex gap-4">
@@ -189,24 +416,24 @@ export default function BookingForm() {
                 <div className="glass p-6 rounded-2xl mb-8 space-y-4">
                   <div className="flex justify-between text-sm">
                     <span className="text-white/60">Room</span>
-                    <span className="text-white font-medium">{selectedRoom !== null ? rooms[selectedRoom].name : 'Ocean Suite'}</span>
+                    <span className="text-white font-medium">{selectedRoomData.name}</span>
                   </div>
                   <div className="flex justify-between text-sm">
                     <span className="text-white/60">Dates</span>
-                    <span className="text-white">May 24 — May 28, 2025</span>
+                    <span className="text-white">{formData.checkIn} — {formData.checkOut}</span>
                   </div>
                   <div className="flex justify-between text-sm">
                     <span className="text-white/60">Guests</span>
-                    <span className="text-white">2 Adults</span>
+                    <span className="text-white">{formData.guests}</span>
                   </div>
                   <div className="flex justify-between text-sm">
                     <span className="text-white/60">Nights</span>
-                    <span className="text-white">4</span>
+                    <span className="text-white">{nights}</span>
                   </div>
                   <div className="h-px bg-white/10 my-4" />
                   <div className="flex justify-between text-sm">
                     <span className="text-white/60">Room Price</span>
-                    <span className="text-white">${selectedRoom !== null ? rooms[selectedRoom].price * 4 : 1800}</span>
+                    <span className="text-white">${selectedRoomData.price * nights}</span>
                   </div>
                   <div className="flex justify-between text-sm">
                     <span className="text-white/60">Taxes & Fees</span>
@@ -215,7 +442,7 @@ export default function BookingForm() {
                   <div className="h-px bg-gold/30 my-4" />
                   <div className="flex justify-between text-lg font-serif">
                     <span className="text-gold">Total</span>
-                    <span className="text-gold">${selectedRoom !== null ? rooms[selectedRoom].price * 4 + 180 : 1980}</span>
+                    <span className="text-gold">${selectedRoomData.price * nights + 180}</span>
                   </div>
                 </div>
                 <div className="flex gap-4">
@@ -230,9 +457,9 @@ export default function BookingForm() {
         </motion.div>
       </div>
 
-      {/* Confirmation Overlay */}
+      {/* Confirmation Success Overlay */}
       <AnimatePresence>
-        {confirmed && (
+        {confirmed && !showDetails && (
           <motion.div
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
@@ -253,9 +480,9 @@ export default function BookingForm() {
                 className="w-24 h-24 mx-auto mb-8 rounded-full border-2 border-gold flex items-center justify-center pulse-ring"
               >
                 <motion.div
-                  initial={{ pathLength: 0 }}
-                  animate={{ pathLength: 1 }}
-                  transition={{ delay: 0.5, duration: 0.5 }}
+                  initial={{ opacity: 0, scale: 0 }}
+                  animate={{ opacity: 1, scale: 1 }}
+                  transition={{ delay: 0.5, duration: 0.4 }}
                 >
                   <Check className="w-10 h-10 text-gold" strokeWidth={3} />
                 </motion.div>
@@ -285,7 +512,7 @@ export default function BookingForm() {
                 transition={{ delay: 0.7 }}
                 className="text-gold text-sm tracking-widest uppercase mb-8"
               >
-                Booking #AUR-2025-8842
+                Booking #{bookingId}
               </motion.p>
               
               <motion.div
@@ -307,15 +534,85 @@ export default function BookingForm() {
                 ))}
               </motion.div>
               
-              <motion.button
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-                transition={{ delay: 1 }}
-                onClick={() => setConfirmed(false)}
-                className="magnetic-btn"
-              >
-                View Booking Details <ArrowRight className="w-4 h-4" />
-              </motion.button>
+              <div className="flex flex-col gap-3">
+                <motion.button
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  transition={{ delay: 1 }}
+                  onClick={() => setShowDetails(true)}
+                  className="magnetic-btn w-full justify-center"
+                >
+                  View Booking Details <ArrowRight className="w-4 h-4" />
+                </motion.button>
+              </div>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      {/* Booking Details View */}
+      <AnimatePresence>
+        {showDetails && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 z-[9000] bg-dark/98 backdrop-blur-xl flex items-center justify-center p-4 lg:p-8 overflow-y-auto"
+          >
+            <motion.div
+              initial={{ scale: 0.9, opacity: 0, y: 30 }}
+              animate={{ scale: 1, opacity: 1, y: 0 }}
+              exit={{ scale: 0.9, opacity: 0, y: 30 }}
+              transition={{ type: "spring", damping: 25 }}
+              className="glass-strong w-full max-w-2xl rounded-3xl p-8 lg:p-12 my-8"
+            >
+              <div className="text-center mb-8">
+                <div className="w-16 h-16 rounded-full border-2 border-gold flex items-center justify-center mx-auto mb-4">
+                  <Check className="w-8 h-8 text-gold" strokeWidth={3} />
+                </div>
+                <h3 className="font-serif text-2xl lg:text-3xl text-white mb-2">Booking <span className="text-gold">Confirmed</span></h3>
+                <p className="text-gold text-sm tracking-widest uppercase">{bookingId}</p>
+              </div>
+
+              <div className="space-y-6 mb-8">
+                <div className="glass p-6 rounded-2xl space-y-4">
+                  <h4 className="text-white text-xs tracking-widest uppercase border-b border-white/10 pb-3">Guest Information</h4>
+                  <div className="grid grid-cols-2 gap-4 text-sm">
+                    <div className="flex items-center gap-2 text-white/60"><User className="w-4 h-4 text-gold" /> {formData.firstName} {formData.lastName}</div>
+                    <div className="flex items-center gap-2 text-white/60"><MapPin className="w-4 h-4 text-gold" /> {formData.country}</div>
+                    <div className="flex items-center gap-2 text-white/60"><Mail className="w-4 h-4 text-gold" /> {formData.email}</div>
+                    <div className="flex items-center gap-2 text-white/60"><Phone className="w-4 h-4 text-gold" /> {formData.phone}</div>
+                  </div>
+                </div>
+
+                <div className="glass p-6 rounded-2xl space-y-4">
+                  <h4 className="text-white text-xs tracking-widest uppercase border-b border-white/10 pb-3">Stay Details</h4>
+                  <div className="grid grid-cols-2 gap-4 text-sm">
+                    <div className="flex items-center gap-2 text-white/60"><Calendar className="w-4 h-4 text-gold" /> {formData.checkIn} to {formData.checkOut}</div>
+                    <div className="flex items-center gap-2 text-white/60"><Users className="w-4 h-4 text-gold" /> {formData.guests}</div>
+                    <div className="flex items-center gap-2 text-white/60"><Bed className="w-4 h-4 text-gold" /> {selectedRoomData.name}</div>
+                    <div className="flex items-center gap-2 text-white/60"><CreditCard className="w-4 h-4 text-gold" /> ${selectedRoomData.price * nights + 180} Total</div>
+                  </div>
+                  {formData.requests && (
+                    <p className="text-white/40 text-xs mt-2 italic">Special Request: {formData.requests}</p>
+                  )}
+                </div>
+              </div>
+
+              <div className="flex flex-col sm:flex-row gap-4">
+                <button 
+                  onClick={downloadDetails}
+                  className="magnetic-btn flex-1 justify-center gap-2"
+                >
+                  <Download className="w-4 h-4" /> Download Details
+                </button>
+                <button 
+                  onClick={() => navigate('/')}
+                  className="magnetic-btn outline flex-1 justify-center gap-2"
+                >
+                  <Home className="w-4 h-4" /> Back to Home
+                </button>
+              </div>
             </motion.div>
           </motion.div>
         )}
